@@ -98,20 +98,42 @@ class JimengAIGenerator:
         return new_images
 
     def download_images(self, index=0):
-        img_selector = 'img[class^="image-"]'
-        img_locator = self.page.locator(img_selector).nth(index)
-        img_locator.hover()
-        download_icon_selector = 'span[class*="action-button-"]'
-        download_icon_locator = self.page.locator(download_icon_selector).first
-        download_icon_locator.wait_for(state='visible', timeout=3000)
-        # Start waiting for the download before you click!
-        with self.page.expect_download() as download_info:
-            download_icon_locator.click()
-        download = download_info.value
-        # Save download with original filename (or you can specify a path)
-        save_path = f"{self.download_dir}\\{download.suggested_filename}"
-        download.save_as(save_path)
-        print(f"Downloaded image to {save_path}")
+        try:
+            img_selector = 'img[class^="image-"]'
+            img_locator = self.page.locator(img_selector).nth(index)
+            img_locator.hover()
+            download_icon_selector = 'span[class*="action-button-"]'
+            download_icon_locator = self.page.locator(download_icon_selector).first
+            download_icon_locator.wait_for(state='visible', timeout=3000)
+            # Start waiting for the download before you click!
+            with self.page.expect_download() as download_info:
+                download_icon_locator.click()
+            download = download_info.value
+            # Save download with original filename (or you can specify a path)
+            save_path = f"{self.download_dir}\\{download.suggested_filename}"
+            download.save_as(save_path)
+            print(f"Downloaded image to {save_path}")
+        except Exception as e:
+            print(f"Error downloading image at index {index}: {e}")
+    
+    def download_new_images(self, timeout=10):
+        n = 0
+        new_images = []
+        try:
+            while n < 10:
+                new_images = self.get_all_available_images()
+                if new_images:
+                    print(f"Found {len(new_images)} new images.")
+                    for idx in range(0, len(new_images)):
+                        self.download_images(index=idx)
+                    break
+                else:
+                    print("No new images found, retrying in 10 seconds...")
+                time.sleep(10)
+                n += 1
+        except Exception as e:
+            print(f"Error in download_new_images: {e}")
+        return new_images
 
     def close(self):
         self.context.close()
@@ -119,22 +141,14 @@ class JimengAIGenerator:
         self.playwright.stop()
 
 if __name__ == "__main__":
+    prompt = ("画面整体色调温暖，细节丰富，具有油画风格，兼具写实与艺术感，氛围安静、学术，充满希望与理想主义。"
+              "画面描绘了年轻坚定的Edwin C. Barnes自信地站在著名发明家托马斯·爱迪生面前，地点在爱迪生的工作室。"
+              "工作室内摆放着简洁但具有代表性的早期电气发明元素，比如桌上的风格化灯泡、大型简化发电机以及一些基本工具。"
+              "整个画面营造出充满理想、灵感闪现的氛围，突出年轻人渴望成功、勇敢追梦的精神。")
     gen = JimengAIGenerator()
-    n = 0
-    while n < 10:
-        new_images = gen.get_all_available_images()
-        if new_images:
-            print(f"Found {len(new_images)} new images.")
-            for img in new_images:
-                print(f"Image URL: {img.get_attribute('src')}")
-            break
-        else:
-            print("No new images found, retrying in 10 seconds...")
-        time.sleep(10)
-        n += 1
     gen.clean_prompt()
-    gen.add_prompt("一只小狗在冬天的阳光下打盹，背景为四川小镇的街道，画面色调柔和，风格为儿童填色画。")
-    gen.download_images()
+    gen.add_prompt(prompt)
     gen.click_submit()
+    gen.download_new_images()
     # ...wait for images to generate as needed...
-    # gen.close()  # Close when done
+    gen.close()  # Close when done

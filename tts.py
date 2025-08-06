@@ -1,12 +1,15 @@
+
 import os
 import json
 import tempfile
 import shutil
-import time
 import pathlib
-import azure.cognitiveservices.speech as speechsdk
-import time as time_module  
+import re
 from datetime import datetime
+import time as time_module
+import azure.cognitiveservices.speech as speechsdk
+
+SENTENCE_END_PUNCT = set("，。！？!?.,;；")
 
 def ms_to_vtt(ms: int) -> str:
     h = ms // 3_600_000
@@ -38,12 +41,48 @@ def make_word_boundary_handler(word_boundaries, text):
         })
     return on_word_boundary
 
+def merge_word_boundaries_to_sentences(word_boundaries):
+    sentences = []
+    cur_sentence = {
+        "words": [],
+        "start_ms": None,
+        "end_ms": None,
+        "text": "",
+        "word_indices": []
+    }
+    for idx, item in enumerate(word_boundaries):
+        word = item["word"] or ""
+        if not word.strip():
+            continue
+        if cur_sentence["start_ms"] is None:
+            cur_sentence["start_ms"] = item["start_ms"]
+        cur_sentence["words"].append(word)
+        cur_sentence["word_indices"].append(idx)
+        cur_sentence["end_ms"] = item["start_ms"]
+        cur_sentence["text"] += word
+
+        # If this word contains sentence-ending punctuation, end current sentence
+        if any(p in word for p in SENTENCE_END_PUNCT):
+            sentences.append(cur_sentence)
+            cur_sentence = {
+                "words": [],
+                "start_ms": None,
+                "end_ms": None,
+                "text": "",
+                "word_indices": []
+            }
+    # Flush any leftover
+    if cur_sentence["words"]:
+        sentences.append(cur_sentence)
+    return sentences
+
 def synthesize_speech(text: str, outdir='./output/audio', save_vtt=True) -> dict:
     speech_config = speechsdk.SpeechConfig(
         subscription=os.environ.get('AZURE_TTS_KEY'),
         endpoint=os.environ.get('AZURE_TTS_ENDPOINT')
     )
-    speech_config.speech_synthesis_voice_name = 'zh-CN-XiaochenMultilingualNeural'
+    #speech_config.speech_synthesis_voice_name = 'zh-CN-XiaochenMultilingualNeural'
+    speech_config.speech_synthesis_voice_name = 'zh-CN-YunzeNeural'
     speech_config.set_speech_synthesis_output_format(
         speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3
     )
@@ -74,22 +113,35 @@ def synthesize_speech(text: str, outdir='./output/audio', save_vtt=True) -> dict
             audio_path = timestamped_dir / f'audio.mp3'
             shutil.copy(tmp_path, audio_path)
 
-            json_path = timestamped_dir / f'words.json'
+            # --- Merge word boundaries into sentences ---
+            sentences = merge_word_boundaries_to_sentences(word_boundaries)
+
+            # Write out JSON for sentences (and also words, for reference)
+            json_path = timestamped_dir / f'sentences.json'
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump({
                     "text": text,
-                    "items": word_boundaries
+                    "sentences": [
+                        {
+                            "text": s["text"],
+                            "start_ms": s["start_ms"],
+                            "end_ms": s["end_ms"] + 400,  # pad 400ms for trailing pause
+                            "word_indices": s["word_indices"],
+                            "words": s["words"],
+                        } for s in sentences
+                    ],
+                    "words": word_boundaries  # keep full word info if needed
                 }, f, ensure_ascii=False, indent=2)
 
+            # Write VTT at sentence level
             vtt_path = None
             if save_vtt:
                 vtt_path = timestamped_dir / f'subtitle.vtt'
                 lines = ["WEBVTT", ""]
-                for i, item in enumerate(word_boundaries):
-                    start = item["start_ms"]
-                    end = (word_boundaries[i + 1]["start_ms"]
-                           if i + 1 < len(word_boundaries) else start + 200)
-                    text_token = item.get("word") or ""
+                for i, s in enumerate(sentences):
+                    start = s["start_ms"]
+                    end = s["end_ms"] + 400
+                    text_token = s["text"]
                     lines.append(str(i + 1))
                     lines.append(f"{ms_to_vtt(start)} --> {ms_to_vtt(end)}")
                     lines.append(text_token)
@@ -99,7 +151,7 @@ def synthesize_speech(text: str, outdir='./output/audio', save_vtt=True) -> dict
 
             return {
                 "audio_path": str(audio_path),
-                "words_json_path": str(json_path),
+                "sentences_json_path": str(json_path),
                 "vtt_path": str(vtt_path) if vtt_path else None
             }
         else:
@@ -130,7 +182,7 @@ def synthesize_speech(text: str, outdir='./output/audio', save_vtt=True) -> dict
 if __name__ == "__main__":
     text = ('美国人没来日本的时候，日本没有民主选举，民众吃不饱穿不暖，农家子弟男要当兵女要当妓，农民没有土地，武士阶级高人一等。'
             '整个日本配给制，吃点好的都要被举报。日本节节败退，但新闻报道却一直是大获全胜。'
-            '结果美国人来了以后：1946年10月11日，麦克阿瑟向币原首相口头传达了五大改革指令。'
+            #'结果美国人来了以后：1946年10月11日，麦克阿瑟向币原首相口头传达了五大改革指令。'
             #'一，女性解放：从此日本女性有了女性参政议政的权利。'
             #'二，承认劳动者的组织权：从此劳动者可以组织工会，可以团结起来争取自己的权益。'
             #'三，教育民主化：军国教育天皇教育就此取消，学校可以自己选定教育课本和内容。'
@@ -144,5 +196,4 @@ if __name__ == "__main__":
     )
     result = synthesize_speech(text)
     print("Audio:", result["audio_path"])
-    print("Words JSON:", result["words_json_path"])
     print("VTT:", result["vtt_path"])
