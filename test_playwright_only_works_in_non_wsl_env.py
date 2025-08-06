@@ -31,7 +31,7 @@ class JimengAIGenerator:
 
         self.context = self.browser.new_context(
             accept_downloads=True,
-            viewport={"width": 1280, "height": 900},
+            #viewport={"width": 1280, "height": 900},
             storage_state="auth.json"
         )
 
@@ -43,6 +43,10 @@ class JimengAIGenerator:
         self.prompt_selector = 'textarea.lv-textarea[placeholder^="请输入图片生成的提示词"]'
         self.button_selector = ('button.lv-btn.lv-btn-primary.lv-btn-size-default.lv-btn-shape-circle.'
                                 'lv-btn-icon-only[type="button"]')
+
+        self.all_images = []
+        self.all_images_src = []
+        self.get_all_available_images()
 
     def _find_target_page(self):
         for p_ in self.context.pages:
@@ -81,8 +85,20 @@ class JimengAIGenerator:
     def click_submit(self):
         self.page.locator(self.button_selector).first.click()
 
+    def get_all_available_images(self):
+        img_selector = 'img[class^="image-"]'
+        new_images = []
+        img_locators = self.page.locator(img_selector)
+        for i in range(img_locators.count()):
+            if img_locators.nth(i).get_attribute('src') in self.all_images_src:
+                continue
+            self.all_images.append(img_locators.nth(i))
+            self.all_images_src.append(img_locators.nth(i).get_attribute('src'))
+            new_images.append(img_locators.nth(i))
+        return new_images
+
     def download_images(self, index=0):
-        img_selector = 'img.image-C3mkAg'
+        img_selector = 'img[class^="image-"]'
         img_locator = self.page.locator(img_selector).nth(index)
         img_locator.hover()
         download_icon_selector = 'span[class*="action-button-"]'
@@ -104,9 +120,21 @@ class JimengAIGenerator:
 
 if __name__ == "__main__":
     gen = JimengAIGenerator()
+    n = 0
+    while n < 10:
+        new_images = gen.get_all_available_images()
+        if new_images:
+            print(f"Found {len(new_images)} new images.")
+            for img in new_images:
+                print(f"Image URL: {img.get_attribute('src')}")
+            break
+        else:
+            print("No new images found, retrying in 10 seconds...")
+        time.sleep(10)
+        n += 1
     gen.clean_prompt()
-    gen.download_images()
     gen.add_prompt("一只小狗在冬天的阳光下打盹，背景为四川小镇的街道，画面色调柔和，风格为儿童填色画。")
+    gen.download_images()
     gen.click_submit()
     # ...wait for images to generate as needed...
     # gen.close()  # Close when done
