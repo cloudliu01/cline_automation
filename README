@@ -1,5 +1,8 @@
-conda activate 3.11.13
-
+#conda activate 3.11.13
+# use official Python istead. Don't use miniforge as it has problem with uvicorn and asyncio
+# In Powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv3.11.9\Scripts\Activate.ps1
 
 
 # To attach to Chrome DevTools from WSL2, the download feature doesn't work

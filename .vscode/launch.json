@@ -10,6 +10,18 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
+        },
+        {
+          "name": "FastAPI: uvicorn",
+          "type": "python",
+          "request": "launch",
+          "module": "uvicorn",
+          "args": [
+            "app_async:app",
+            "--host", "0.0.0.0",
+            "--port", "8000"
+          ],
+          "jinja": true
         }
     ]
 }

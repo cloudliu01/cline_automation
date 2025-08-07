@@ -1,2 +1,4 @@
 .env
 output/audio/*
+venv3.11.9/*
+*.pyc
