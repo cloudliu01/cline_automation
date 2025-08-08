@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.routers import gen, tts_api
+from app.routers import gen, tts_api, n8n
 from jiment_ai_generator_async import JimengAIGenerator  # existing dependency
 from app.services.tts_service import TTSService
 
@@ -19,6 +19,7 @@ def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan, title="Media Automation API", version="1.0.0")
     app.include_router(gen.router)
     app.include_router(tts_api.router)
+    app.include_router(n8n.router)
     return app
 
 app = create_app()
