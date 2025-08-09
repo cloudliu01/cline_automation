@@ -1,4 +1,5 @@
 .env
 output/audio/*
+output/test_runs/*
 venv3.11.9/*
 *.pyc
