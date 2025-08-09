@@ -16,7 +16,7 @@ def test_upload_endpoints_write_files(test_app):
     ]
 
     for ep, filename in endpoints:
-        r = test_app.post(f"/api/{ep}", json=payload)
+        r = test_app.post(f"/n8n/{ep}", json=payload)
         assert r.status_code == 200, r.text
         data = r.json()
         assert data["status"] == "success"
@@ -28,7 +28,7 @@ def test_upload_endpoints_write_files(test_app):
 
 def _epub_path() -> Path:
     # Resolve relative to this test file: tests/input_data/test1.epub
-    return Path(__file__).parent / "input_data" / "test1.epub"
+    return Path(__file__).parent / "input_data" / "think_and_grow_rich.epub"
 
 
 def test_parse_epub_endpoint_creates_chapters_file(test_app):
@@ -37,7 +37,7 @@ def test_parse_epub_endpoint_creates_chapters_file(test_app):
         pytest.skip(f"Missing EPUB fixture: {epub_file}")
 
     files = {"file": (epub_file.name, epub_file.read_bytes(), "application/epub+zip")}
-    r = test_app.post("/api/parse_epub", files=files)
+    r = test_app.post("/n8n/parse_epub", files=files)
     assert r.status_code == 200, r.text
     chapters = r.json()
     assert isinstance(chapters, list)
@@ -53,6 +53,6 @@ def test_parse_epub_endpoint_creates_chapters_file(test_app):
 
 def test_parse_epub_rejects_non_epub(test_app):
     files = {"file": ("not_epub.txt", b"hello", "text/plain")}
-    r = test_app.post("/api/parse_epub", files=files)
+    r = test_app.post("/n8n/parse_epub", files=files)
     assert r.status_code == 400
     assert "epub" in r.json()["detail"].lower()
