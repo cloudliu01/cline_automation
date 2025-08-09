@@ -8,3 +8,6 @@ beautifulsoup4>=4.13.4
 ebooklib>=0.19
 lxml>=6.0.0
 python-multipart>=0.0.20
+loguru>=0.7.3
+faster_whisper>=1.2.0
+torch>=2.8.0

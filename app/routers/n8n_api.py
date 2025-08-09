@@ -13,7 +13,7 @@ import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
 
-router = APIRouter(prefix="/api", tags=["N8N IO"])
+router = APIRouter(prefix="/n8n", tags=["N8N IO"])
 
 OUTPUT_ROOT = Path("./output/n8n").resolve()
 

@@ -9,6 +9,10 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "args": ["tests/input_data/sample_chinese_60s.mp3"],
             "console": "integratedTerminal"
         },
         {

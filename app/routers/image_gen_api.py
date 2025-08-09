@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from app.models import PromptRequest, IndexRequest
 
-router = APIRouter(prefix="/gen", tags=["Generator"])
+router = APIRouter(prefix="/image_gen", tags=["Generator"])
 
 @router.post("/clean_prompt")
 async def clean_prompt(request: Request):
