@@ -33,6 +33,15 @@ def _safe_write_json(rel_filename: str, data: Any) -> str:
         json.dump(data, f, ensure_ascii=False, indent=4)
     return str(path)
 
+def _load_json(rel_filename: str) -> Any:
+    try:
+        with open((OUTPUT_ROOT / rel_filename).resolve(), "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="File not found")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format")
+
 
 class GenericJSON(RootModel[Any]):
     """Accept arbitrary JSON payloads and echo back."""
@@ -72,11 +81,21 @@ async def parse_epub(file: UploadFile = File(...)) -> List[Dict[str, str]]:
     _safe_write_json("chapters.json", chapters)
     return chapters
 
+@router.post("/get_chapters")
+async def get_chapters() -> GenericJSON:
+    data = _load_json("chapters.json")
+    return GenericJSON(root=data)
 
-@router.post("/upload")
+@router.post("/upload_transcript")
 async def upload_json(payload: GenericJSON):
     path = _safe_write_json("transcript_generated.json", payload.data)
     return {"status": "success", "path": path, "data": payload.data}
+
+# write a get function to retrieve the uploaded JSON data
+@router.get("/get_transcript")
+async def get_uploaded_json() -> GenericJSON:
+    data = _load_json("transcript_generated.json")
+    return GenericJSON(root=data)
 
 
 @router.post("/upload_kv_data")
@@ -84,14 +103,63 @@ async def upload_kv_data(payload: GenericJSON):
     path = _safe_write_json("kv_data.json", payload.data)
     return {"status": "success", "path": path, "data": payload.data}
 
+@router.get("/get_kv_data")
+async def get_uploaded_kv_data() -> GenericJSON:
+    data = _load_json("kv_data.json")
+    return GenericJSON(root=data)
+
 
 @router.post("/upload_kv_data_revised")
 async def upload_kv_data_revised(payload: GenericJSON):
     path = _safe_write_json("kv_data_revised.json", payload.data)
     return {"status": "success", "path": path, "data": payload.data}
 
+@router.get("/get_kv_data_revised")
+async def get_uploaded_kv_data_revised() -> GenericJSON:
+    data = _load_json("kv_data_revised.json")
+    return GenericJSON(root=data)
+
 
 @router.post("/upload_data_w_prompt")
 async def upload_data_w_prompt(payload: GenericJSON):
     path = _safe_write_json("data_w_prompt.json", payload.data)
+    return {"status": "success", "path": path, "data": payload.data}
+
+@router.get("/get_data_w_prompt")
+async def get_uploaded_data_w_prompt() -> GenericJSON:
+    data = _load_json("data_w_prompt.json")
+    return GenericJSON(root=data)
+
+@router.get("/get_all_text_data")
+async def get_all_text_data() -> GenericJSON:
+    '''
+    To get all text data, including 
+        transcript_generated
+        kv_data
+        kv_data_revised
+        data_w_prompt
+    '''
+    #chapters = _load_json("chapters.json")
+    #chapter_data = [{'transcript': e['transcript'], 'book_introduction': e['content'], 'title': e['title'], 'chapter_content_original': e['text']}
+    #                         for e in _load_json("transcript_generated.json")]
+    #kv_data = [e['json'] for e in  _load_json("kv_data.json")]
+    kv_data_revised = [e['json']['json'] for e in  _load_json("kv_data_revised.json")] 
+    out_data = [
+            {'title': key, 'transcript': value}
+            for item in kv_data_revised
+            for key, value in item.items()
+        ]
+    data_w_prompt = _load_json("data_w_prompt.json")
+    for idx, e in enumerate(data_w_prompt):
+        print(e)
+        for k,v in e.items():
+            out_data[idx][k] = v
+    return out_data
+
+@router.post("/save_tts_result")
+async def save_tts_result(payload: GenericJSON):
+    """
+    Save TTS result to a JSON file.
+    """
+    path = _safe_write_json("tts_result.json", payload.data)
     return {"status": "success", "path": path, "data": payload.data}

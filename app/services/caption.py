@@ -426,14 +426,14 @@ def convert_webvtt_to_ass(
     language_hint: str = "auto",   # "auto" | "en" | "cjk"
     max_length_per_line: int = 22, # smaller for CJK; larger for spaced languages
     lines_per_segment: int = 2,    # 2–3 lines looks good
-    font_name="Arial",
-    font_size=42,
-    font_color="#FFFFFF",
-    stroke_color="#000000",
-    stroke_size=2,
-    shadow_color="#000000",
-    shadow_transparency=0.5,
-    shadow_blur=2,
+    font_name="Noto Sans CJK SC",
+    font_size=80,
+    stroke_size=6,
+    font_color="#000000",
+    stroke_color="#FFFFFF",
+    shadow_color="#FF7300",
+    shadow_transparency=0.55,
+    shadow_blur=4,
     subtitle_position="bottom",
     fade_ms: int = 120,            # gentle fade
 ) -> str:
@@ -505,13 +505,13 @@ if __name__ == "__main__":
         output_path="out.ass",
         dimensions=(1920, 1080),
         language_hint="cjk",          # force CJK splitting
-        max_length_per_line=16,       # allow more characters per line (CJK)
+        max_length_per_line=20,       # allow more characters per line (CJK)
         lines_per_segment=2,          # 2 or 3 lines works well
         font_name="Noto Sans CJK SC", # good CJK font
-        font_size=56,
-        stroke_size=3,
+        font_size=100,
+        stroke_size=5,
         shadow_transparency=0.55,
-        shadow_blur=3,
+        shadow_blur=5,
         subtitle_position="bottom",
         fade_ms=120,
     )

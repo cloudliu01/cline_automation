@@ -82,10 +82,13 @@ async def kokoro_synthesize(req: KokoroSynthesizeRequest):
     if not lang_code:
         raise HTTPException(status_code=400, detail=f"Invalid voice: {voice}")
 
-    # Prepare paths
-    outdir = Path(req.outdir).resolve()
+    # Prepare paths with audio/$YYYYMMDD_ddhhmm hierarchy
+    now = datetime.now()
+    date_str = now.strftime("%Y%m%d")
+    audio_subdir = Path("./") / date_str
+    outdir = Path(req.outdir).resolve() / audio_subdir
     outdir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = now.strftime("%Y%m%d_%H%M%S")
     base = req.filename or f"kokoro_{voice}_{ts}.wav"
     wav_path = (outdir / base).with_suffix(".wav")
     captions_json_path = wav_path.with_suffix(".json")

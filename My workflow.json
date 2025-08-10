@@ -1,0 +1,2219 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "你是一个翻译，帮我把输入英文翻译为中文"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        784,
+        -256
+      ],
+      "id": "f0aae308-dd40-426a-a291-2c594b23f7df",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-r1:14b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -48
+      ],
+      "id": "ff2f544c-e039-4318-bc43-fccc351e7112",
+      "name": "Ollama Chat Model"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        -48
+      ],
+      "id": "1c6fb1e4-0549-475e-a1f8-af660991160d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        -256
+      ],
+      "id": "1e975419-67f8-4454-91b7-b653bdcca985",
+      "name": "When chat message received",
+      "webhookId": "16e8fe2e-e5f1-48b8-ad6b-6ae0071419dd"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -256
+      ],
+      "id": "acc553a3-682c-4954-8cfb-82d412f7aa2d",
+      "name": "Markdown"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import ebooklib\nfrom ebooklib import epub\nfrom bs4 import BeautifulSoup\nimport json\nimport argparse\nprint('done')"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -256
+      ],
+      "id": "83b30167-a54a-4a8e-8c48-6212d139e8cd",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "triggerOn": "folder",
+        "path": "/files/raw_materials",
+        "events": [
+          "add",
+          "change"
+        ],
+        "options": {
+          "followSymlinks": true,
+          "usePolling": true
+        }
+      },
+      "id": "bfe84bd6-e9d7-4f6e-a709-dce0027538ef",
+      "name": "Local File Trigger",
+      "type": "n8n-nodes-base.localFileTrigger",
+      "typeVersion": 1,
+      "position": [
+        160,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "da64ffde-1e8f-478d-baea-59fc05e6d3ce",
+              "name": "data",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a0d8dd78-12f4-4d7a-b229-2e5f9b0d700f",
+      "name": "Prep Incoming Doc",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        1072,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "df327b01-961c-4a49-8455-58c3fbff111a",
+              "name": "project",
+              "value": "={{ $json.path.split('/').slice(0, 4)[3] }}",
+              "type": "string"
+            },
+            {
+              "id": "6b7d26f9-3a38-417e-85d0-4e9d42476465",
+              "name": "path",
+              "value": "={{ $json.path }}",
+              "type": "string"
+            },
+            {
+              "id": "bb4471c7-d894-4739-99a6-4be247794ffa",
+              "name": "filename",
+              "value": "={{ $json.path.split('/').last() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cc6adb9d-be22-4d81-ad2b-ba8760ad308f",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        336,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fileType }}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "cf167324-3f1b-4c24-be38-515cd72ba6e8"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pdf"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "3a5f509d-46fe-490c-95f0-35124873c63e",
+                    "leftValue": "={{ $json.fileType }}",
+                    "rightValue": "docx",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "docx"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "013cc12e-d040-4be1-b0db-58f42e9beee7",
+                    "leftValue": "={{ $json.fileExtension }}",
+                    "rightValue": "epub",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "epub"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "75188d2f-4bea-44ea-a579-9b9a1bd1ea93",
+                    "leftValue": "={{ $json }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "everything else"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c75cd3dc-76db-4850-904f-48f11a7f4365",
+      "name": "Get FileType",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        496,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $json.path }}",
+        "options": {}
+      },
+      "id": "a5af5728-d2a6-4402-aa68-addd89c4e784",
+      "name": "Import File",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        320,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "013f2cad-1999-447c-b6a1-05f93c6a8eb9",
+      "name": "Extract from PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "ods",
+        "options": {}
+      },
+      "id": "cf3527a4-a8ea-417f-868e-b6406a1d9a46",
+      "name": "Extract from DOCX",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "id": "e6c62e4d-1c64-4124-9691-31eac868fd10",
+      "name": "Extract from TEXT",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 1. Watch Folder and Import New Documents\n[Read more about Local File Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger)\n\nWith n8n's local file trigger, we're able to trigger the workflow when files are created in our target folder. We still have to import them however as the trigger will only give the file's path. The \"Extract From\" node is used to get at the file's contents.",
+        "height": 998,
+        "width": 1235,
+        "color": 7
+      },
+      "id": "03760c3d-4a80-46d3-ae75-b4535676b51b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        80,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "triggerOn": "file",
+        "path": "/files/output/chapters.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.localFileTrigger",
+      "typeVersion": 1,
+      "position": [
+        192,
+        1344
+      ],
+      "id": "c4796bce-e158-4a93-93e6-5b4f93c54975",
+      "name": "Local File Trigger1"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $json.path }}",
+        "options": {}
+      },
+      "id": "d9ebddf9-7c39-4f4a-b213-459f665e69b8",
+      "name": "Import File1",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        1344
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "df327b01-961c-4a49-8455-58c3fbff111a",
+              "name": "project",
+              "value": "={{ $json.path.split('/').slice(0, 4)[3] }}",
+              "type": "string"
+            },
+            {
+              "id": "6b7d26f9-3a38-417e-85d0-4e9d42476465",
+              "name": "path",
+              "value": "={{ $json.path }}",
+              "type": "string"
+            },
+            {
+              "id": "bb4471c7-d894-4739-99a6-4be247794ffa",
+              "name": "filename",
+              "value": "={{ $json.path.split('/').last() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "63660781-97ec-46f8-8ae6-b8c7a1a17652",
+      "name": "Settings1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        448,
+        1344
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "=data",
+        "destinationKey": "=",
+        "options": {}
+      },
+      "id": "3f218f71-0a0c-4ac5-bdf2-3fe306036f9a",
+      "name": "Extract from chapters.json",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        928,
+        1344
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const keys = Object.keys(items[0].json);\nconst chapterArray = items[0].json[keys[0]];\nreturn chapterArray.map(obj => ({ json: obj }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        1344
+      ],
+      "id": "886284e9-d920-4f57-9dee-282d5e5bd298",
+      "name": "flatten"
+    },
+    {
+      "parameters": {
+        "content": "## Step 1a:\n\n从Step 1的结果读取chapters.json直接输送给大模型，而不要去parse 原书",
+        "height": 342,
+        "width": 1235,
+        "color": 7
+      },
+      "id": "cb2ee433-fb92-4842-89b9-6ea17f8b969e",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        80,
+        1216
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "//const pattern = /introduction|chapter|^epilogue/i;\nconst pattern = /introduction|^epilogue/i;\n\nreturn items.filter(item => item.json.title && pattern.test(item.json.title));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        704
+      ],
+      "id": "3e3f7d76-4634-44e0-b375-3c24e4a7445a",
+      "name": "Filter out irrelated sections",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const chapters = items.map(i => i.json);\n// Find index of Introduction (case-insensitive, plus 导论/简介/前言/序言 supported)\nconst introIdx = chapters.findIndex(\n  chap => chap.title &&\n    /^(introduction|^charpter)$/i.test(chap.title.trim())\n);\n\nlet before_intro, introduction, after_intro;\n\nif (introIdx !== -1) {\n  before_intro = chapters.slice(0, introIdx);\n  introduction = [chapters[introIdx]];  // 修正为数组\n  after_intro = chapters.slice(introIdx + 1);\n} else {\n  before_intro = chapters;\n  introduction = [];  // 空数组\n  after_intro = [];\n}\n\nreturn [\n  {\n    json: {\n      before_intro,\n      introduction,\n      after_intro\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        1344
+      ],
+      "id": "95c4908a-eba9-4b9d-ab65-11b3b33c6a5d",
+      "name": "split_before_after_introduction",
+      "notes": "Split the data into 3 parts:\nbefore_intro\nintroduction\nafter_intro (chapters)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2144,
+        1264
+      ],
+      "id": "cd175b4f-539c-4048-a877-302329a28e70",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "before_intro",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        1328
+      ],
+      "id": "e10749a8-a5f6-4748-8377-dea67fc1919e",
+      "name": "before_intro"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": " introduction",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        1136
+      ],
+      "id": "12202d08-aee1-42d0-a6ca-4a1f06399fc4",
+      "name": "introduction"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "after_intro",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        1520
+      ],
+      "id": "64d9251d-9762-45ef-ab9b-aa5629ab3b60",
+      "name": "after_intro"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 输入为 n8n 标准 items: items = [{json: {title:..., text:...}}, ...]\nconst chapters = items.map(i => i.json);\n\n// 找到 Introduction 的 index，支持多种写法（不区分大小写）\nconst introIdx = chapters.findIndex(\n  chap => chap.title &&\n    /(introduction|导论|简介|前言|序言)/i.test(chap.title.trim())\n);\n\nlet before_intro, introduction;\n\nif (introIdx !== -1) {\n  before_intro = chapters.slice(0, introIdx);\n  introduction = chapters[introIdx];\n} else {\n  before_intro = chapters;\n  introduction = null;\n}\n\n\nfunction prettyChapters(chapters) {\n  return chapters.map(ch => `【${ch.title}】\\n${ch.text}`).join('\\n\\n');\n}\n\nreturn [{\n  json: {\n    before_intro_text: prettyChapters(before_intro),\n    introduction_text: introduction ? `【${introduction.title}】\\n${introduction.text}` : ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2352,
+        1264
+      ],
+      "id": "200b0a19-82d1-44eb-a33e-cccf2534802b",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "请根据给定Introduction要点，生成300-600个中文字符（根据内容丰富程度和重复程度控制。比如内容不丰富，重复度高，就输出< 800字(tokens)，如果内容丰富，重复度低，就输出800-1000字(tokens)的讲稿，语言自然、连贯，避免书面化。如果涉及故事就选一到两个，注意用简洁语言表达完整的故事和涉及的主要人物，以及总结故事所想表达的意义。把输出按表达的意思分段，用两个'\\n'隔开。",
+              "role": "system"
+            },
+            {
+              "content": "=以下是导论章节内容：\n{{ $json.introduction_text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2592,
+        1264
+      ],
+      "id": "56bed8af-e17a-409e-a5bd-cb2fe4765743",
+      "name": "生成简介",
+      "credentials": {
+        "openAiApi": {
+          "id": "vFvuzDxqfcGSaiDM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3232,
+        1504
+      ],
+      "id": "08ca6e15-7217-4179-8a94-1ea09bbbbbf6",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const pattern = /^chapter/i;  // 例子：排除标题以 \"chapter\" 开头的章节\n\nconst filtered = items\n  .map(i => i.json)\n  .filter(chap => pattern.test(chap.title));\n\nreturn filtered.map(chap => ({ json: chap }));\n"
+      },
+      "id": "ad2d3fd2-0775-434d-a31f-13e99ea17346",
+      "name": "Extract chapters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        2352,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items[0].json.message"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2960,
+        1264
+      ],
+      "id": "4fc81cc4-a650-45a0-b862-2b3b7c01d33c",
+      "name": "extract_message"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4576,
+        1520
+      ],
+      "id": "99aa70ee-d8fa-4ce3-8888-d5992477968b",
+      "name": "合并输入信息到输出"
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const pattern = /^chapter [1,2,3]$/i;  // 例子：排除标题以 \"chapter\" 开头的章节\n\nconst filtered = items\n  .map(i => i.json)\n  .filter(chap => pattern.test(chap.title));\n\nreturn filtered.map(chap => ({ json: chap }));\n"
+      },
+      "id": "070b1489-fd7b-4c79-b9b6-346d83b6a892",
+      "name": "抽取2个chapters做测试",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        3456,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 把所有 items 合并为数组，放到 data 字段\nreturn [\n  {\n    json: {\n      data: items.map(item => item.json)\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4784,
+        1520
+      ],
+      "id": "9dd3f36d-93bf-417d-8e08-27ed4a14b80b",
+      "name": "合并"
+    },
+    {
+      "parameters": {
+        "content": "## Step 2:\n\n给每个chapter生成transcript",
+        "height": 198,
+        "width": 3683,
+        "color": 7
+      },
+      "id": "2bd39972-1913-4096-8456-a51bc8503e0e",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5679/api/parse_epub",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1072,
+        704
+      ],
+      "id": "23f28f80-66c8-493a-902a-7c1cf5384dc7",
+      "name": "Save_to_file_through_flask",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.227:8000/n8n/upload",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5024,
+        1520
+      ],
+      "id": "d10beb09-9ae8-425a-88e9-eadaef0efed6",
+      "name": "Save_to_file_through_http",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({\n  json: {\n    id: item.json.id || \"\",\n    object: item.json.object || \"\",\n    created: item.json.created || \"\",\n    model: item.json.model || \"\",\n    usage: item.json.usage || \"\",\n    transcript: item.json.choices?.[0]?.message?.content || \"\"\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        1456
+      ],
+      "id": "49224ce0-33a0-4029-b8cb-35687eedb46b",
+      "name": "标准化输出"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        5536,
+        1392
+      ],
+      "id": "6c5ad7ff-3a27-44b2-af67-371f79f44035",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({\n  json: {\n    transcript: item.json.content\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3616,
+        1264
+      ],
+      "id": "9a9055ac-a60b-4ab0-bacb-b73b6968ce3e",
+      "name": "extract_message1"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log(items);\nreturn items.map(item => ({\n  json: {\n    title: item.json.title,\n    text: item.json.text\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3616,
+        1104
+      ],
+      "id": "f7122dc2-b754-446e-accd-36d9f23400d5",
+      "name": "extract_message2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3936,
+        1248
+      ],
+      "id": "dab344f8-6628-41c6-9355-e6e99d474501",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      data: items // 或你合并好的list\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6240,
+        1392
+      ],
+      "id": "9ea01191-0b92-466f-84db-32c9eb1690f3",
+      "name": "合并1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = [];\n\nfor (const item of items[0].json.data) {\n  result.push({\n    title: item.title || \"\",\n    text: item.text || \"\",\n    //intro_content: item.content || \"\",\n    transcript: item.transcript || \"\"\n  });\n}\n\nreturn result.map(x => ({json: x}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5232,
+        1520
+      ],
+      "id": "abfb2ffb-0635-4bc2-9d1e-82d387f8d31d",
+      "name": "格式化输出必要properties"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({\n  json: {\n    title: item.json.title,\n    transcript: item.json.transcript\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5744,
+        1392
+      ],
+      "id": "e7b38eea-f4c3-4a6d-a0f4-84dee18eec23",
+      "name": "输出title和transcript"
+    },
+    {
+      "parameters": {
+        "jsCode": "let result = [];\nfor (const item of items) {\n  const title = item.json.title;\n  const transcriptArr = item.json.transcript\n    ? item.json.transcript.split(/\\n{1,2}/).filter(s => s.trim() !== \"\")\n    : [];\n  for (const para of transcriptArr) {\n    // 每段作为一个对象，key 为 title，value 为该段文本\n    let obj = {};\n    obj[title] = para;\n    result.push({json: obj});\n  }\n}\nreturn result;\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6000,
+        1392
+      ],
+      "id": "023e3aca-c8fa-4743-a238-2ee8bdd31631",
+      "name": "变为{key:value} list"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.227:8000/n8n/upload_kv_data",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6496,
+        1392
+      ],
+      "id": "2030e92b-f7ee-4d2d-8a9d-09b9b5052b5c",
+      "name": "Save_to_file_through_http1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=以下是需要润色的内容： {{ JSON.stringify($json.data) }}"
+            }
+          ]
+        },
+        "jsonOutput": "={{ true }}",
+        "options": {
+          "systemMessage": "=你是一名专业中文播客撰稿人，擅长用口语化、温暖、清晰但客观的语言检查并微调播客文本。你将收到一个数组，每个元素格式为：{\"json\": {章节名: 原文内容}, \"pairedItem\": ...}。请你针对每个 json 里的文本，优先调整首尾句，使其与前后段落、前后章节更连贯，整体适合连续收听。如确有需要，可在段落起始自然加入“首先/接下来/与此同时/此外/最后/总结”等承接递进词，但不要每段都用，也不要出现“在这一章/章节/部分/第X章”等结构化提示。章节内部除首尾句外无需大幅修改，确保语意、顺序和数量完全不变。  硬性输出要求：  输出为与输入等长的数组。每个元素仍为 {\"json\": {章节名: 润色后内容}}，不允许多于一个键，顺序和键名必须与输入一一对应、完全一致（不可合并、重排或丢弃）。  只需输出数组本身，不要包裹对象、注释、说明或 markdown 代码块。  输入示例： [ {\"json\": {\"Introduction\": \"……\"}, \"pairedItem\": {\"item\": 0}}, {\"json\": {\"Chapter 1\": \"……\"}, \"pairedItem\": {\"item\": 1}}, {\"json\": {\"Chapter 1\": \"……\"}, \"pairedItem\": {\"item\": 2}} ]  只输出： [ {\"json\": {\"Introduction\": \"润色后的内容1\"}},{\"json\": {\"Introduction\": \"润色后的内容2\"}}, {\"json\": {\"Chapter 1\": \"润色后的内容1\"}}, {\"json\": {\"Chapter 1\": \"润色后的内容2\"}} ]  注意： * 严禁添加任何章节编号提示或结构化表达（如“在这一章/本章/章节/部分中”等）。  * 如内容过长/被截断，优先保留前后顺序和每条文本独立性。  * 如果需要承接/递进表达，只在合适的位置自然插入。",
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        6736,
+        1744
+      ],
+      "id": "89cfb332-86c9-498f-bd72-42d5f060dac1",
+      "name": "综合润色 google",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nbPeSlHS5EUP9wBf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=你是一名专业中文播客撰稿人，擅长用口语化、温暖、清晰但客观的语言检查并微调播客文本。你将收到一个数组，每个元素格式为：{\"json\": {章节名: 原文内容}, \"pairedItem\": ...}。请你针对每个 json 里的文本，优先调整首尾句，使其与前后段落、前后章节更连贯，整体适合连续收听。如确有需要，可在段落起始自然加入“首先/接下来/与此同时/此外/最后/总结”等承接递进词，但不要每段都用，也不要出现“在这一章/章节/部分/第X章”等结构化提示。章节内部除首尾句外无需大幅修改，确保语意、顺序和数量完全不变。  硬性输出要求：  输出为与输入等长的数组。每个元素仍为 {\"json\": {章节名: 润色后内容}}，不允许多于一个键，顺序和键名必须与输入一一对应、完全一致（不可合并、重排或丢弃）。  只需输出数组本身，不要包裹对象、注释、说明或 markdown 代码块。  输入示例： [ {\"json\": {\"Introduction\": \"……\"}, \"pairedItem\": {\"item\": 0}}, {\"json\": {\"Chapter 1\": \"……\"}, \"pairedItem\": {\"item\": 1}}, {\"json\": {\"Chapter 1\": \"……\"}, \"pairedItem\": {\"item\": 2}} ]  只输出： [ {\"json\": {\"Introduction\": \"润色后的内容1\"}},{\"json\": {\"Introduction\": \"润色后的内容2\"}}, {\"json\": {\"Chapter 1\": \"润色后的内容1\"}}, {\"json\": {\"Chapter 1\": \"润色后的内容2\"}} ]  注意： * 严禁添加任何章节编号提示或结构化表达（如“在这一章/本章/章节/部分中”等）。  * 如内容过长/被截断，优先保留前后顺序和每条文本独立性。  * 如果需要承接/递进表达，只在合适的位置自然插入。",
+              "role": "system"
+            },
+            {
+              "content": "=以下使需要润色的数据：\n{{ JSON.stringify($json.data) }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        6944,
+        1392
+      ],
+      "id": "f1ff3a42-3702-4ba4-9e70-063792dfff6f",
+      "name": "综合润色 - not working",
+      "credentials": {
+        "openAiApi": {
+          "id": "vFvuzDxqfcGSaiDM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code (JavaScript) node\n\n// 1. 获取字符串\nconst raw = items[0].json.content.parts[0].text;\n\n// 2. 反序列化为数组\n// 注意：这里有可能字符串前后有空白或换行，建议加 trim\nlet arr;\ntry {\n  arr = JSON.parse(raw.trim());\n} catch (e) {\n  // LLM输出如果多了转义字符（如 \\\"）也可以这样处理\n  arr = JSON.parse(raw.trim()\n    .replace(/\\\\n/g, '\\n')\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\'/g, \"'\")\n  );\n}\n\n// 3. 返回新结构（n8n每条返回包裹在 {json: ...} 下）\nreturn arr.map(e => ({ json: e }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7152,
+        1744
+      ],
+      "id": "2d7a1d08-9cce-4ef0-ace0-bb9d2390e6fa",
+      "name": "text转为JSON"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite-preview-06-17",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite-preview-06-17"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=这是这章节 {{ $json.title }} 的内容：\n{{ $json.text }}"
+            }
+          ]
+        },
+        "options": {
+          "systemMessage": "=你现在是一名中文播客撰稿人，擅长用口语化、温暖、清晰但客观的语言，将书籍章节要点转化为适合1–2分钟收听的中文播客稿件。请根据给定章节要点，生成 400-800个中文字符的讲稿（具体字数根据本章节内容丰富程度和重复程度控制。例如，如果内容不丰富或重复度高，输出400-500字；如果内容丰富、重复度低，则输出700-800字）。讲稿语言应自然、连贯，避免书面化表达。\n\n请特别注意：\n\n连贯性与过渡： 如果章节结论与本章节中出现的例子相关，请务必对相关例子进行简要概括，确保结论的出现自然流畅，避免突兀。在这种情况下，输出字数可以适量增加，以保证整个章节稿件的意义完整且连贯。\n\n避免重复开场白与结构化提示： 请勿在输出中包含任何形式的开场白（如“朋友你好，欢迎回到我们的播客”或“你好呀！”）或章节编号提示（如“今天我们要聊的是这本书的第三章”、“在这一章/本章/章节/部分中”）。我们假设播客整体的开头和打招呼部分已在其他地方处理。\n\n假设合并场景： 请记住，你现在处理的只是全书介绍或某个具体章节。这些章节最终会合并到一起形成完整的播客，因此请确保每个章节稿件自身独立且能与前后章节自然衔接，整体适合连续收听。\n\n本集背景信息： {{ $json.content }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        2016
+      ],
+      "id": "cdf02364-290b-4fc0-a33f-ded4fc26660c",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nbPeSlHS5EUP9wBf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  let text = \"\";\n  if (\n    item &&\n    item.json &&\n    item.json.content &&\n    Array.isArray(item.json.content.parts) &&\n    item.json.content.parts[0] &&\n    typeof item.json.content.parts[0].text === \"string\"\n  ) {\n    text = item.json.content.parts[0].text;\n  }\n  return { transcript: text };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4192,
+        2016
+      ],
+      "id": "6d36441f-e481-4b5a-aebe-c3eb6930cc39",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4512,
+        1904
+      ],
+      "id": "2d1c2490-1f35-4a68-bde7-60336e5f17cf",
+      "name": "合并输入信息到输出1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.227:8000/n8n/upload_kv_data_revised",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        7616,
+        1984
+      ],
+      "id": "d305981d-f37b-4bb0-ac4b-419afe36faf1",
+      "name": "Save_to_file_through_http2",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      data: items // 或你合并好的list\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7392,
+        1984
+      ],
+      "id": "e112cd15-4697-473c-aa03-70e800cb72b4",
+      "name": "合并2"
+    },
+    {
+      "parameters": {
+        "triggerOn": "file",
+        "path": "/files/output/kv_data_revised.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.localFileTrigger",
+      "typeVersion": 1,
+      "position": [
+        8096,
+        1680
+      ],
+      "id": "c43e0731-0c2b-488c-bf18-1d55c5a8379c",
+      "name": "Local File Trigger2"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $json.path }}",
+        "options": {}
+      },
+      "id": "9d2f9ca8-a2f2-4c68-b53e-eb77be222b16",
+      "name": "Import File2",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        8592,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "df327b01-961c-4a49-8455-58c3fbff111a",
+              "name": "project",
+              "value": "={{ $json.path.split('/').slice(0, 4)[3] }}",
+              "type": "string"
+            },
+            {
+              "id": "6b7d26f9-3a38-417e-85d0-4e9d42476465",
+              "name": "path",
+              "value": "={{ $json.path }}",
+              "type": "string"
+            },
+            {
+              "id": "bb4471c7-d894-4739-99a6-4be247794ffa",
+              "name": "filename",
+              "value": "={{ $json.path.split('/').last() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7144942d-01e8-4bc3-9ec8-884457abc276",
+      "name": "Settings2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        8352,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "  const entry = items[0].json;\n  const k_temp = Object.keys(entry)[0];\n  const l_temp = entry[k_temp];\n\nreturn l_temp.map(item => {\n  const entry = item.json;\n  return entry;\n}).slice(0,11);\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9040,
+        1680
+      ],
+      "id": "cc4a0146-31ce-478f-b5fc-13a04ab74e35",
+      "name": "flatten1"
+    },
+    {
+      "parameters": {
+        "content": "## Step 3:\n\n从Step 2的结果读取kv_data_revised.json",
+        "height": 342,
+        "width": 1235,
+        "color": 7
+      },
+      "id": "76f2a052-3cbf-41cb-a091-656683a37edb",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        7984,
+        1552
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "=data",
+        "destinationKey": "=",
+        "options": {}
+      },
+      "id": "5361994c-dbfa-44b8-8a1c-875d0a5d6331",
+      "name": "Extract from kv_data_revised.json",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        8832,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "=models/gemini-2.5-flash-lite-preview-06-17",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{  JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "options": {
+          "systemMessage": "=请根据输入json的value内容生成一个prompt，对这个prompt的要求：\n* 用英文\n* 用途为作画\n* 目标图片风格和所提供的提示词模板一致 \n* 详细描述每个人物的神态，外貌，穿着，使其符合所给的场景  \n* 背景要简单，但要切合主题和人物。即使是简单背景，也要详细描述，使其符合（不要偏离）所给场景\n\n提示词需要以以下风格提示开头：\nCreate an image in a children's coloring book style: bold, even black outlines on white, no shading or tone. Simplify textures into playful, easily recognizable shapes."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        9312,
+        1792
+      ],
+      "id": "cc1f8c64-084b-4d77-ad07-e781cd4f7f92",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nbPeSlHS5EUP9wBf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        9728,
+        1600
+      ],
+      "id": "c65bf554-221f-41ea-a497-b1983d65dff2",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "jsCode": "//return items.map(item => {\n//  // 章节名（key）\n//  const k_temp = Object.keys(item)[0];\n//  const chapter = Object.keys(item[k_temp])[0];\n//  // transcript 内容\n//  const transcript = item[k_temp][chapter];\n//  // prompt 内容\n//  const prompt = item[k_temp].content?.parts?.[0]?.text || \"\";\n//  return {\n//    json: {\n//      chapter,\n//      transcript,\n //     prompt\n//   }\n // };\n//});\nreturn items.map(item => {\n  // 章节名（key）\n  const k_temp = Object.keys(item)[0];\n  //const chapter = Object.keys(item[k_temp])[0];\n  const inner = item.json; // All real data is inside item.json\n  const chapter = Object.keys(inner).find(k => k !== \"content\"); \n  // transcript 内容\n    const transcript = inner[chapter];\n  // prompt 内容\n  const prompt = item[k_temp].content?.parts?.[0]?.text || \"\";\n  return {\n    json: {\n      chapter,\n      transcript,\n      prompt\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9936,
+        1600
+      ],
+      "id": "528d5daa-a8c9-40db-b5ca-a626a89f0560",
+      "name": "Reconstruct data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5679/api/upload_data_w_prompt",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        10400,
+        1600
+      ],
+      "id": "abfc4a16-5d7b-4c87-aa83-a8ab675e5171",
+      "name": "Save_to_file_through_http3",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    data: items.map(item => item.json)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10176,
+        1600
+      ],
+      "id": "031e8c2d-9d08-46c3-9bf7-0a28a776ea9b",
+      "name": "合并3"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-NANO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=你现在是一名中文播客撰稿人，擅长用口语化、温暖、清晰但客观的语言，将书籍章节要点转化为适合1–2分钟收听的中文播客稿件。请根据给定章节要点，生成 600-800个中文字符的讲稿（具体字数根据本章节内容丰富程度和重复程度控制。例如，如果内容不丰富或重复度高，输出< 600 字；如果内容丰富、重复度低，则输出700-800字）。讲稿语言应自然、连贯，避免书面化表达。\n\n请特别注意：\n\n连贯性与过渡： 如果章节结论与本章节中出现的例子相关，请务必对相关例子进行简要概括，确保结论的出现自然流畅，避免突兀。在这种情况下，输出字数可以适量增加，以保证整个章节稿件的意义完整且连贯。\n\n避免重复开场白与结构化提示： 请勿在输出中包含任何形式的开场白（如“朋友你好，欢迎回到我们的播客”或“你好呀！”）或章节编号提示（如“今天我们要聊的是这本书的第三章”、“在这一章/本章/章节/部分中”）。我们假设播客整体的开头和打招呼部分已在其他地方处理。\n\n假设合并场景： 请记住，你现在处理的只是全书介绍或某个具体章节。这些章节最终会合并到一起形成完整的播客，因此请确保每个章节稿件自身独立且能与前后章节自然衔接，整体适合连续收听。\n\n本集背景信息： {{ $json.content }}",
+              "role": "system"
+            },
+            {
+              "content": "=这是这章节 {{ $json.title }} 的内容：\n{{ $json.text }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        3824,
+        1456
+      ],
+      "id": "285e43bd-d434-41d8-846a-a64cf6e0afe9",
+      "name": "生成章节解说1",
+      "credentials": {
+        "openAiApi": {
+          "id": "vFvuzDxqfcGSaiDM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.1.227:8000/n8n/get_kv_data_revised",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9040,
+        2080
+      ],
+      "id": "3731f40d-e8a9-45c9-919a-107ff5e8da6b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "请根据输入json的value内容生成一个prompt，对这个prompt的要求：\n* 用中文\n* 用途为作画\n* 目标图片风格和所提供的提示词模板一致 \n* 详细描述每个人物的神态，外貌，穿着，使其符合所给的场景  \n* 背景要简单，但要切合主题和人物。即使是简单背景，也要详细描述，使其符合（不要偏离）所给场景\n* 600字以内\n\n提示词需要以以下风格提示开头：\n水彩风格，日本动漫画法。 ",
+              "role": "system"
+            },
+            {
+              "content": "={{  JSON.stringify($json.json.json) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        9296,
+        2080
+      ],
+      "id": "041faa5a-c9ed-4e91-b28c-78e67814358a",
+      "name": "Message a model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "vFvuzDxqfcGSaiDM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    data: items.map(item => item.json)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10016,
+        2080
+      ],
+      "id": "a53d6ffc-a842-4d6d-b250-f4cf7b786b04",
+      "name": "合并4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.227:8000/n8n/upload_data_w_prompt",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.data }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        10512,
+        2080
+      ],
+      "id": "d84015bc-8107-49e6-a453-0c0032ade6ee",
+      "name": "Save_to_file_through_http4",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// 获取上一步传来的 JSON 数据\nconst input = items[0].json.data;\n\n// 组装成一个对象\nconst result = {\n  data: input.map(d => ({\n    gen_image_prompt: d.message.content\n  }))\n};\n\n// 注意：n8n Function 节点必须返回数组，这里用一个元素包装\nreturn [\n  {\n    json: result\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10272,
+        2080
+      ],
+      "id": "d28062f2-c547-45ca-acd5-4d04eea0f934",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "content": "## Step 3 new:\n从step 2结果生成提示词",
+        "height": 470,
+        "width": 1971,
+        "color": 7
+      },
+      "id": "4a12569d-fba4-4cc0-b3e3-a815ae5b5474",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8928,
+        1968
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.1.227:8000/n8n/get_all_text_data",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9008,
+        2720
+      ],
+      "id": "23e3dbcf-7c7d-4d76-9306-cf719ea299e9",
+      "name": "Save_to_file_through_http5",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "## Step 4:\n读入step3 的输入和结果，merge输出",
+        "height": 470,
+        "width": 1971,
+        "color": 7
+      },
+      "id": "0752e503-c7f1-4658-a885-53f82d7ab992",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8928,
+        2496
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Local File Trigger": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Import File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get FileType": {
+      "main": [
+        [
+          {
+            "node": "Extract from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from DOCX",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save_to_file_through_flask",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from TEXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import File": {
+      "main": [
+        [
+          {
+            "node": "Get FileType",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from PDF": {
+      "main": [
+        [
+          {
+            "node": "Prep Incoming Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from DOCX": {
+      "main": [
+        [
+          {
+            "node": "Prep Incoming Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from TEXT": {
+      "main": [
+        [
+          {
+            "node": "Prep Incoming Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Local File Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Settings1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings1": {
+      "main": [
+        [
+          {
+            "node": "Import File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import File1": {
+      "main": [
+        [
+          {
+            "node": "Extract from chapters.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from chapters.json": {
+      "main": [
+        [
+          {
+            "node": "flatten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "flatten": {
+      "main": [
+        [
+          {
+            "node": "Filter out irrelated sections",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "split_before_after_introduction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter out irrelated sections": {
+      "main": [
+        []
+      ]
+    },
+    "split_before_after_introduction": {
+      "main": [
+        [
+          {
+            "node": "before_intro",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "introduction",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "after_intro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "before_intro": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "introduction": {
+      "main": [
+        [
+          {
+            "node": "extract_message2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "生成简介",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "生成简介": {
+      "main": [
+        [
+          {
+            "node": "extract_message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "after_intro": {
+      "main": [
+        [
+          {
+            "node": "Extract chapters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract chapters": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "extract_message": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "extract_message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "抽取2个chapters做测试",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并输入信息到输出": {
+      "main": [
+        [
+          {
+            "node": "合并",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抽取2个chapters做测试": {
+      "main": [
+        [
+          {
+            "node": "合并输入信息到输出",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "合并输入信息到输出1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "生成章节解说1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并": {
+      "main": [
+        [
+          {
+            "node": "Save_to_file_through_http",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save_to_file_through_flask": {
+      "main": [
+        [
+          {
+            "node": "Filter out irrelated sections",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "split_before_after_introduction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save_to_file_through_http": {
+      "main": [
+        [
+          {
+            "node": "格式化输出必要properties",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "标准化输出": {
+      "main": [
+        [
+          {
+            "node": "合并输入信息到输出",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract_message1": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "extract_message2": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "输出title和transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "格式化输出必要properties": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "输出title和transcript": {
+      "main": [
+        [
+          {
+            "node": "变为{key:value} list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "变为{key:value} list": {
+      "main": [
+        [
+          {
+            "node": "合并1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并1": {
+      "main": [
+        [
+          {
+            "node": "Save_to_file_through_http1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save_to_file_through_http1": {
+      "main": [
+        [
+          {
+            "node": "综合润色 google",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "综合润色 - not working",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "综合润色 google": {
+      "main": [
+        [
+          {
+            "node": "text转为JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "合并输入信息到输出1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "合并输入信息到输出1": {
+      "main": [
+        [
+          {
+            "node": "合并",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "text转为JSON": {
+      "main": [
+        [
+          {
+            "node": "合并2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并2": {
+      "main": [
+        [
+          {
+            "node": "Save_to_file_through_http2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Local File Trigger2": {
+      "main": [
+        [
+          {
+            "node": "Settings2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import File2": {
+      "main": [
+        [
+          {
+            "node": "Extract from kv_data_revised.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings2": {
+      "main": [
+        [
+          {
+            "node": "Import File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from kv_data_revised.json": {
+      "main": [
+        [
+          {
+            "node": "flatten1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "flatten1": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "Reconstruct data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并3": {
+      "main": [
+        [
+          {
+            "node": "Save_to_file_through_http3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reconstruct data": {
+      "main": [
+        [
+          {
+            "node": "合并3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "生成章节解说1": {
+      "main": [
+        [
+          {
+            "node": "标准化输出",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model2": {
+      "main": [
+        [
+          {
+            "node": "合并4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并4": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Save_to_file_through_http4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save_to_file_through_http5": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "130a6a80-1f52-475c-8e5c-e7a94ddd894e",
+  "meta": {
+    "instanceId": "d38e11265b40d87732206c780a5ec49ccbe9a3b60593692b77c1909e0fdf53f3"
+  },
+  "id": "H5HP3s3lMbyxjV0E",
+  "tags": []
+}
